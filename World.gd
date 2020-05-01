@@ -14,7 +14,7 @@ var population_array = []
 #var test_population_array = [
 #	{"genome":"data"},
 #	{"genome":"data"},
-#]
+#] test
 #
 var simpleStartingGenome = {
 	0:{"type":"connection", "in":1, "out":5, "weight":0.5, "innovationId":0, "enabled":true},
