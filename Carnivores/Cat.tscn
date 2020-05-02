@@ -43,7 +43,7 @@ polygon = PoolVector2Array( -0.0696716, -9.79497, -14.0313, 10.0118, 16.705, 9.1
 [node name="InputTickTimer" type="Timer" parent="."]
 process_priority = 9
 process_mode = 0
-wait_time = 0.5
+wait_time = 0.4
 autostart = true
 
 [node name="NeuroFireRetryTimer" type="Timer" parent="."]
@@ -51,12 +51,23 @@ wait_time = 0.1
 
 [node name="TweenNode" type="Tween" parent="."]
 
-[node name="Button" type="Button" parent="."]
+[node name="ProcessInputOnceButton" type="Button" parent="."]
+visible = false
 margin_left = -5.01318
 margin_top = -7.45187
 margin_right = 38.9868
 margin_bottom = 12.5481
 text = "think"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CheckBrainButton" type="Button" parent="."]
+margin_left = 1.0
+margin_top = 22.0
+margin_right = 35.0
+margin_bottom = 42.0
+text = "chk"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -66,4 +77,5 @@ __meta__ = {
 [connection signal="area_shape_entered" from="DownVision" to="." method="_on_DownVision_area_shape_entered"]
 [connection signal="timeout" from="InputTickTimer" to="." method="_on_InputTickTimer_timeout"]
 [connection signal="timeout" from="NeuroFireRetryTimer" to="." method="_on_NeuroFireRetryTimer_timeout"]
-[connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]
+[connection signal="pressed" from="ProcessInputOnceButton" to="." method="_on_Button_pressed"]
+[connection signal="pressed" from="CheckBrainButton" to="." method="_on_CheckBrainButton_pressed"]

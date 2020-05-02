@@ -1,6 +1,4 @@
 extends Node2D
-
-var Neuro = load("res://NEAT/Neuro.gd") # create a Neuro reference object
 var NeuralNet = load("res://NEAT/NeuralNet.gd")
 var Cat = preload("res://Carnivores/Cat.tscn")
 
@@ -52,7 +50,6 @@ var chance_disable_neuro = 0.005
 var chance_enable_neuro = 0.005
 var chance_mess_with_neuros = 0.01
 var chance_mess_with_connections = 0.1
-
 var DYNAMIC_POPULATION = false
 var SPECIATION = true
 
@@ -60,18 +57,6 @@ var SPECIATION = true
 #0 state input
 #1,2,3 4 vision input
 #5,6,7,8 movement output
-
-var masterNeuroGenomeList = [
-	{"id":0, "type":"Input", "enabled":true}, 
-	{"id":1, "type":"Input", "enabled":true}, 
-	{"id":2, "type":"Input", "enabled":true}, 
-	{"id":3, "type":"Input", "enabled":true}, 
-	{"id":4, "type":"Input", "enabled":true}, 
-	{"id":5, "type":"Output", "enabled":true},
-	{"id":6, "type":"Output", "enabled":true},
-	{"id":7, "type":"Output", "enabled":true},
-	{"id":8, "type":"Output", "enabled":true}
-]
 
 var masterNeuroGenome = {
 	0:{"type":"Input", "enabled":true}, 
@@ -82,11 +67,13 @@ var masterNeuroGenome = {
 	5:{"type":"Output", "enabled":true},
 	6:{"type":"Output", "enabled":true},
 	7:{"type":"Output", "enabled":true},
-	8:{"type":"Output", "enabled":true}
+	8:{"type":"Output", "enabled":true},
+	9:{"type":"Hidden", "enabled":false},
+	10:{"type":"Hidden", "enabled":true},
+	11:{"type":"Hidden", "enabled":true}
 }
 var inputNeurosArray = [0, 1, 2, 3, 4]
 var outputNeurosArray = [5, 6, 7, 8]
-
 var masterInnovationList = {
 	0:{"type":"connection", "in":1, "out":5, "weight":0.5, "innovationId":0, "enabled":true},
 	1:{"type":"connection", "in":2, "out":6, "weight":0.5, "innovationId":1, "enabled":true},
@@ -105,11 +92,6 @@ var masterInnovationList = {
 	14:{"type":"connection", "in":1, "out":11, "weight":0.5, "innovationId":14, "enabled":true}
 }
 
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass
-	
 
 class MyCustomSorter:
 	static func sort_ascending(a, b):
@@ -186,8 +168,8 @@ func create_new_organism(genome):
 	self.lifetime_pop += 1
 	#var newOrganism = Cat.new(genome, self.masterNeuroGenome)
 	var newOrganism = Cat.instance().create(genome, self.masterNeuroGenome)
-	print(newOrganism)
-	print(print_tree())
+	#print(newOrganism)
+	#print(print_tree())
 	get_tree().get_root().add_child(newOrganism)
 	#newOrganism.connect("death", self, "_on_organism_dead")
 
@@ -252,13 +234,16 @@ func determineWhichSpeciesToClassifyItAs(genomeA):
 		return
 	else:
 		#sort to find closest match, add to species population, incorporate fitness
+		#print(geneticDistancesArray)
 		var sortedGeneticDistancesArray = geneticDistancesArray.sort_custom(MyCustomSorter, "sort_geneticDistancesArray_ascending")
-		var closestMatchSpeciesId = self.species_array[sortedGeneticDistancesArray[0][1]] #[[closest genetic distance, speciesid],[],[]]
-		var newavgfitness = closestMatchSpeciesId["avgfitness"] * closestMatchSpeciesId["population"]
-		closestMatchSpeciesId["population"] += 1
-		newavgfitness += genomeA["fitness"]
-		closestMatchSpeciesId["avgfitness"] = newavgfitness / closestMatchSpeciesId["population"]
-		genomeA["speciesid"] = closestMatchSpeciesId["speciesid"]
+		#print(sortedGeneticDistancesArray)
+		if sortedGeneticDistancesArray != null:
+			var closestMatchSpeciesId = self.species_array[sortedGeneticDistancesArray[0][1]] #[[closest genetic distance, speciesid],[],[]]
+			var newavgfitness = closestMatchSpeciesId["avgfitness"] * closestMatchSpeciesId["population"]
+			closestMatchSpeciesId["population"] += 1
+			newavgfitness += genomeA["fitness"]
+			closestMatchSpeciesId["avgfitness"] = newavgfitness / closestMatchSpeciesId["population"]
+			genomeA["speciesid"] = closestMatchSpeciesId["speciesid"]
 		return
 
 
@@ -337,7 +322,6 @@ func randomize_tweak_weight(gene):
 
 func mutate_random_weight(genome):
 	print(genome)
-	print("array of keys")
 	var tempArray = genome.keys()
 	randomize()
 	var randomKey = tempArray[randi()%len(tempArray)]

@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://NEAT/VisualNeuralNet.gd" type="Script" id=1]
+
+[node name="VisualNeuralNet" type="Node2D" groups=[
+"VNN",
+]]
+position = Vector2( -439.992, -223.184 )
+script = ExtResource( 1 )
+
+[node name="GridContainer" type="GridContainer" parent="."]
+show_behind_parent = true
+margin_left = -466.122
+margin_top = -274.859
+margin_right = 436.878
+margin_bottom = 221.141
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/vseparation = 35
+custom_constants/hseparation = 35
+columns = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CloseButton" type="Button" parent="."]
+margin_left = 868.269
+margin_top = 2.54471
+margin_right = 914.269
+margin_bottom = 31.5447
+text = "close"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="CloseButton" to="." method="_on_CloseButton_pressed"]
