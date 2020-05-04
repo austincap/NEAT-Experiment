@@ -10,10 +10,10 @@ script = ExtResource( 1 )
 [node name="Camera2D" type="Camera2D" parent="."]
 
 [node name="PanelContainer1" type="PanelContainer" parent="Camera2D"]
-margin_left = -499.629
-margin_top = 147.629
-margin_right = -327.629
-margin_bottom = 291.629
+margin_left = -509.0
+margin_top = 148.0
+margin_right = -316.0
+margin_bottom = 292.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -21,11 +21,11 @@ __meta__ = {
 [node name="Container" type="VBoxContainer" parent="Camera2D/PanelContainer1"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 165.0
+margin_right = 186.0
 margin_bottom = 137.0
 
 [node name="HSplitContainer1" type="HSplitContainer" parent="Camera2D/PanelContainer1/Container"]
-margin_right = 158.0
+margin_right = 179.0
 margin_bottom = 14.0
 
 [node name="Generation" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer1"]
@@ -36,7 +36,7 @@ valign = 1
 
 [node name="Label" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer1"]
 margin_left = 83.0
-margin_right = 158.0
+margin_right = 179.0
 margin_bottom = 14.0
 text = "0"
 align = 2
@@ -46,18 +46,18 @@ __meta__ = {
 
 [node name="HSplitContainer2" type="HSplitContainer" parent="Camera2D/PanelContainer1/Container"]
 margin_top = 18.0
-margin_right = 158.0
+margin_right = 179.0
 margin_bottom = 32.0
 
-[node name="# of Organisms" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer2"]
-margin_right = 98.0
+[node name="Total # of Organisms" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer2"]
+margin_right = 133.0
 margin_bottom = 14.0
-text = "# of Organisms"
+text = "Total # of Organisms"
 valign = 1
 
 [node name="Label" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer2"]
-margin_left = 110.0
-margin_right = 158.0
+margin_left = 145.0
+margin_right = 179.0
 margin_bottom = 14.0
 text = "0"
 align = 2
@@ -67,24 +67,41 @@ __meta__ = {
 
 [node name="HSplitContainer3" type="HSplitContainer" parent="Camera2D/PanelContainer1/Container"]
 margin_top = 36.0
-margin_right = 158.0
+margin_right = 179.0
 margin_bottom = 50.0
 
-[node name="# of Species" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer3"]
-margin_right = 78.0
+[node name="Total # of Species" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer3"]
+margin_right = 113.0
 margin_bottom = 14.0
-text = "# of Species"
+text = "Total # of Species"
 valign = 1
 
 [node name="Label" type="Label" parent="Camera2D/PanelContainer1/Container/HSplitContainer3"]
-margin_left = 90.0
-margin_right = 158.0
+margin_left = 125.0
+margin_right = 179.0
 margin_bottom = 14.0
 text = "0"
 align = 2
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="HBoxContainer" type="HSplitContainer" parent="Camera2D/PanelContainer1/Container"]
+margin_top = 54.0
+margin_right = 179.0
+margin_bottom = 68.0
+
+[node name="Current # of Organisms" type="Label" parent="Camera2D/PanelContainer1/Container/HBoxContainer"]
+margin_right = 149.0
+margin_bottom = 14.0
+text = "Current # of Organisms"
+
+[node name="Label" type="Label" parent="Camera2D/PanelContainer1/Container/HBoxContainer"]
+margin_left = 161.0
+margin_right = 179.0
+margin_bottom = 14.0
+text = "0"
+align = 2
 
 [node name="PanelContainer2" type="PanelContainer" parent="Camera2D"]
 margin_left = 296.0
@@ -113,11 +130,17 @@ margin_right = 198.0
 margin_bottom = 44.0
 text = "New cat"
 
-[node name="StartSimulation" type="CheckButton" parent="Camera2D/PanelContainer2/VBoxContainer"]
+[node name="ExportCurrentGen" type="Button" parent="Camera2D/PanelContainer2/VBoxContainer"]
 margin_top = 48.0
 margin_right = 198.0
-margin_bottom = 88.0
-text = "Start simulation"
+margin_bottom = 68.0
+text = "Export current gen"
+
+[node name="ExportCurrentSpeciesArray" type="Button" parent="Camera2D/PanelContainer2/VBoxContainer"]
+margin_top = 72.0
+margin_right = 198.0
+margin_bottom = 92.0
+text = "Export species"
 
 [node name="Player" parent="Camera2D" groups=[
 "player",
@@ -126,5 +149,13 @@ text = "Start simulation"
 [node name="VisualNeuralNet" parent="Camera2D/Player" instance=ExtResource( 3 )]
 visible = false
 position = Vector2( 1.46954, -2.45325 )
+
+[node name="BushGenTimer" type="Timer" parent="."]
+process_priority = 6
+process_mode = 0
+wait_time = 3.0
+autostart = true
 [connection signal="pressed" from="Camera2D/PanelContainer2/VBoxContainer/NewGeneration" to="." method="_on_NewGeneration_pressed"]
-[connection signal="toggled" from="Camera2D/PanelContainer2/VBoxContainer/StartSimulation" to="." method="_on_StartSimulation_toggled"]
+[connection signal="pressed" from="Camera2D/PanelContainer2/VBoxContainer/ExportCurrentGen" to="." method="_on_ExportCurrentGen_pressed"]
+[connection signal="pressed" from="Camera2D/PanelContainer2/VBoxContainer/ExportCurrentSpeciesArray" to="." method="_on_ExportCurrentSpeciesArray_pressed"]
+[connection signal="timeout" from="BushGenTimer" to="." method="_on_BushGenTimer_timeout"]

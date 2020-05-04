@@ -113,5 +113,9 @@ func _on_CheckBrainButton_pressed():
 	self.showingVNN = true
 
 func _on_WeakSpot_area_shape_entered(area_id, area, area_shape, self_shape):
-	self.score -= 3
-	die()
+	if area.is_in_group("bush"):
+		self.score += 2
+		area.get_parent().queue_free()
+	elif area.is_in_group("player"):
+		self.score -= 3
+		die()

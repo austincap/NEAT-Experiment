@@ -58,6 +58,7 @@ wait_time = 0.4
 autostart = true
 
 [node name="NeuroFireRetryTimer" type="Timer" parent="."]
+process_mode = 0
 wait_time = 0.1
 
 [node name="TweenNode" type="Tween" parent="."]
@@ -83,8 +84,11 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="WeakSpot" type="Area2D" parent="."]
-collision_mask = 0
+[node name="WeakSpot" type="Area2D" parent="." groups=[
+"cat",
+]]
+collision_layer = 2
+collision_mask = 5
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WeakSpot"]
 position = Vector2( 0, 3 )

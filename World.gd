@@ -1,5 +1,6 @@
 extends Node2D
 var Cat = preload("res://Carnivores/Cat.tscn")
+var Bush = preload("res://Plants/Bush.tscn")
 var lifetime_pop = 0
 var this_gen_pop = 0
 var generation_number = 0
@@ -7,11 +8,6 @@ var species_amount = 0
 var species_array = []
 var population_array = []
 
-#var test_population_array = [
-#	{"genome":"data"},
-#	{"genome":"data"},
-#] test
-#
 var simpleStartingGenome = {
 	0:{"type":"connection", "in":1, "out":5, "weight":0.5, "innovationId":0, "enabled":true},
 	1:{"type":"connection", "in":2, "out":6, "weight":0.8, "innovationId":1, "enabled":true},
@@ -30,15 +26,16 @@ var simpleStartingGenome = {
 #	{"id":0, "population":33, "avgfitness":10, "typicalgenome":{"genome":"data"}}
 #]
 
-var GENERATION_SIZE = 50
+var GENERATION_SIZE = 30
 var NUMBER_OF_RANDOM_NOVEL_ORGANISMS_PER_GENERATION = 1
-var TIMES_TO_CLONE_TOP_ORGANISM_DURING_REPRODUCTION = 5
-var innovationDictSize = 9
+var TIMES_TO_CLONE_TOP_ORGANISM_DURING_REPRODUCTION = 10
+var innovationDictSize = 14
 var MAX_HIDDEN_NEURONS = 20
+var BUSHGENERATIONRATE = 3
 var connection_weight_mutation_chance = 0.8
 var chance_of_each_weight_uniform_mutation = 0.9
 var chance_of_each_weight_randomly_mutated = 0.1
-var chance_disable_inherited_gene = 0.75
+#var chance_disable_inherited_gene = 0.75
 var chance_mutation_NO_crossover = 0.25
 var chance_interspecies_mating = 0.001
 var chance_new_neuro = 0.01
@@ -90,13 +87,6 @@ var masterInnovationList = {
 	14:{"type":"connection", "in":1, "out":11, "weight":0.5, "innovationId":14, "enabled":true}
 }
 
-#signal based death
-func evaluate_organism(organism_genome):
-	determineWhichSpeciesToClassifyItAs(organism_genome)
-
-func _on_StartSimulation_toggled(button_pressed):
-	create_new_generation(self.GENERATION_SIZE)
-
 
 #CREATION
 func create_new_generation(gen_size):
@@ -108,8 +98,8 @@ func create_new_generation(gen_size):
 	if self.generation_number > 0:
 		for organism_genome in self.population_array:
 			evaluate_organism(organism_genome)
-		var sorted_genome_array = self.population_array.sort_custom(MyCustomSorter, "sort_pop_array_of_genome_objects_ascending_make_array")
-		var top_organism = sorted_genome_array[0]
+		self.population_array.sort_custom(MyCustomSorter, "sort_pop_array_of_genome_objects_ascending_make_array")
+		var top_organism = self.population_array[0]
 		var tempOrganismGenome
 		for i in range(timesClone):
 			tempOrganismGenome = cloning(top_organism)
@@ -118,7 +108,7 @@ func create_new_generation(gen_size):
 			tempOrganismGenome = create_new_genome_from_innovation_list()
 			tempArray.append(tempOrganismGenome)
 		for i in range(gen_size-timesClone-timesRando):
-			tempOrganismGenome = mating(sorted_genome_array[i+1], sorted_genome_array[i+2])
+			tempOrganismGenome = mating(self.population_array[i+1], self.population_array[i+2])
 			tempArray.append(tempOrganismGenome)
 	else:
 		var genome
@@ -133,19 +123,20 @@ func create_new_generation(gen_size):
 	self.population_array = tempArray
 	for enemy in get_tree().get_nodes_in_group("organisms"):
 		enemy.queue_free()
-	print("population_array")
-	print(self.population_array)
-	var popId = 0
+	#print("population_array")
+	#print(self.population_array)
+	self.this_gen_pop = 0
 	for genome in self.population_array:
-		create_new_organism(genome, popId)
-		popId += 1
+		create_new_organism(genome, self.this_gen_pop)
 	self.generation_number += 1
-	$"Camera2D/PanelContainer1/Container/HSplitContainer1/Label".text = str(self.generation_number)
+	$Camera2D/PanelContainer1/Container/HSplitContainer1/Label.text = str(self.generation_number)
+	$Camera2D/PanelContainer1/Container/HSplitContainer2/Label.text = str(self.lifetime_pop)
+	$Camera2D/PanelContainer1/Container/HBoxContainer/Label.text = str(self.this_gen_pop)
 	print("new generation born")
 	#print(len(self.population_array))
 
 func create_new_organism(genome, indexInPopArray):
-	genome.fitness = 0
+	genome.fitness = randf() #so it's possible to sort fitnesses that happen to be the same
 	self.this_gen_pop += 1
 	self.lifetime_pop += 1
 	var newOrganism = Cat.instance().create(genome, self.masterNeuroGenome, indexInPopArray)
@@ -154,14 +145,25 @@ func create_new_organism(genome, indexInPopArray):
 	newOrganism.connect("death", self, "_on_organism_dead")
 
 func _on_organism_dead(organismNode):
-	print("another one bites the dust")
+	print("another one bites the dust. final score: "+str(organismNode.score))
 	self.this_gen_pop -= 1
-	print(organismNode.score)
+	$Camera2D/PanelContainer1/Container/HBoxContainer/Label.text = str(self.this_gen_pop)
+	#print(organismNode.score)
 	self.population_array[organismNode.organismId]["fitness"] = organismNode.score
-	print(self.population_array)
+	#print(self.population_array)
 	organismNode.queue_free()
 	if self.this_gen_pop == 0:
 		print("CREATE NEW GEN?")
+		create_new_generation(self.GENERATION_SIZE)
+
+func createNewBush(bushesPerTimeout):
+	var i = 0
+	while i < bushesPerTimeout:
+		var newBush = Bush.instance()
+		self.add_child(newBush)
+		newBush.global_position.x = rand_range(-500, -100)
+		newBush.global_position.y = rand_range(-300, 300)
+		i += 1
 
 
 #CLASSIFICATION
@@ -206,33 +208,38 @@ func determineWhichSpeciesToClassifyItAs(genomeA):
 		genomeA.speciesid = 0
 		self.species_amount += 1
 		self.species_array.append(speciesInfoObject)
-		return
-	for exampleGenomeB in self.species_array:
-		tempDistance = geneticDistance(genomeA, exampleGenomeB.typicalgenome)
-		print("tempDistance="+str(tempDistance))
-		if tempDistance < 2:
-			existingSpeciesMatchFound = true
-			geneticDistancesArray.append([tempDistance, exampleGenomeB.speciesid])
-	#if not initial species but no match is found, add a new species
-	if existingSpeciesMatchFound == false:
-		self.species_amount += 1
-		var speciesInfoObject = {"speciesid":self.species_amount, "population":1, "avgfitness":genomeA.fitness, "typicalgenome":genomeA}
-		self.species_array.append(speciesInfoObject)
-		genomeA.speciesid = self.species_amount
-		return
 	else:
-		#sort to find closest match, add to species population, incorporate fitness
-		#print(geneticDistancesArray)
-		var sortedGeneticDistancesArray = geneticDistancesArray.sort_custom(MyCustomSorter, "sort_geneticDistancesArray_ascending")
-		#print(sortedGeneticDistancesArray)
-		if sortedGeneticDistancesArray != null:
-			var closestMatchSpeciesId = self.species_array[sortedGeneticDistancesArray[0][1]] #[[closest genetic distance, speciesid],[],[]]
-			var newavgfitness = closestMatchSpeciesId["avgfitness"] * closestMatchSpeciesId["population"]
-			closestMatchSpeciesId["population"] += 1
-			newavgfitness += genomeA["fitness"]
-			closestMatchSpeciesId["avgfitness"] = newavgfitness / closestMatchSpeciesId["population"]
-			genomeA["speciesid"] = closestMatchSpeciesId["speciesid"]
-		return
+		for exampleGenomeB in self.species_array:
+			tempDistance = geneticDistance(genomeA, exampleGenomeB.typicalgenome)
+			print("tempDistance="+str(tempDistance))
+			if tempDistance < 0.25:
+				existingSpeciesMatchFound = true
+				geneticDistancesArray.append([tempDistance, exampleGenomeB.speciesid])
+		#if not initial species but no match is found, add a new species
+		if existingSpeciesMatchFound == false:
+			self.species_amount += 1
+			var speciesInfoObject = {"speciesid":self.species_amount, "population":1, "avgfitness":genomeA.fitness, "typicalgenome":genomeA}
+			self.species_array.append(speciesInfoObject)
+			genomeA.speciesid = self.species_amount
+			geneticDistancesArray.append([tempDistance, genomeA.speciesid])
+			#print("genetic distances array")
+			#print(geneticDistancesArray)
+		else:
+			#sort to find closest match, add to species population, incorporate fitness
+			#print(geneticDistancesArray)
+			var sortedGeneticDistancesArray = geneticDistancesArray.sort_custom(MyCustomSorter, "sort_geneticDistancesArray_ascending")
+			#print(sortedGeneticDistancesArray)
+			if sortedGeneticDistancesArray != null:
+				var closestMatchSpeciesId = self.species_array[sortedGeneticDistancesArray[0][1]] #[[closest genetic distance, speciesid],[],[]]
+				var newavgfitness = closestMatchSpeciesId["avgfitness"] * closestMatchSpeciesId["population"]
+				closestMatchSpeciesId["population"] += 1
+				newavgfitness += genomeA["fitness"]
+				closestMatchSpeciesId["avgfitness"] = newavgfitness / closestMatchSpeciesId["population"]
+				genomeA["speciesid"] = closestMatchSpeciesId["speciesid"]
+	$Camera2D/PanelContainer1/Container/HSplitContainer3/Label.text = str(self.species_amount)
+
+func evaluate_organism(organism_genome):
+	determineWhichSpeciesToClassifyItAs(organism_genome)
 
 class MyCustomSorter:
 	static func sort_ascending(a, b):
@@ -264,8 +271,9 @@ func mating(genomeA, genomeB):
 	#if genomeA has more elements than genomeB
 	if len(genomeA.values()) >= len(genomeB.values()):
 		#for each gene in genomeA
+		print(genomeA)
 		for i in genomeA:
-			if i != "fitness" and i != "speciesid":
+			if str(i) != "fitness" and str(i) != "speciesid":
 				#if a matching innovationId can be found in genomeB
 				if genomeB.has(i):
 					newGenome[i] = genomeA[i]
@@ -281,7 +289,7 @@ func mating(genomeA, genomeB):
 		mutate_random_weight(newGenome)
 	else:
 		for i in genomeB:
-			if i != "fitness" and i != "speciesid":
+			if str(i) != "fitness" and str(i) != "speciesid":
 				if genomeA.has(i):
 					newGenome[i] = genomeB[i]
 				else:
@@ -306,12 +314,12 @@ func create_new_genome_from_innovation_list():
 	var totalInnovations = len(self.masterInnovationList)
 	randomize()
 	var sizeOfNewGenome = int(rand_range(8+totalInnovations/3, totalInnovations))
-	print(sizeOfNewGenome)
+	#print(sizeOfNewGenome)
 	while i < sizeOfNewGenome:
 		innovationIdToPick = randi()%(totalInnovations)
 		#if random innovationId hasn't already been added
 		if newGenome.has(innovationIdToPick) == false:
-			print(innovationIdToPick)
+			#print(innovationIdToPick)
 			newGenome[innovationIdToPick] = self.masterInnovationList[innovationIdToPick]
 			i += 1
 	return newGenome
@@ -324,7 +332,7 @@ func mutate_weight(gene):
 			randomize_tweak_weight(gene)
 		else:
 			randomize_set_weight(gene)
-	print(gene)
+	#print(gene)
 
 func randomize_set_weight(gene):
 	if gene["weight"] != null:
@@ -423,5 +431,25 @@ func addConnectionToInnovationList():
 		print("no connection added")
 
 
+#SIGNALS FROM THIS SCENE
 func _on_NewGeneration_pressed():
 	create_new_generation(self.GENERATION_SIZE)
+
+func _on_BushGenTimer_timeout():
+	createNewBush(self.BUSHGENERATIONRATE)
+
+func _on_ExportCurrentGen_pressed():
+	var file = File.new()
+	if file.open("res://saved_pop_array_"+str(OS.get_ticks_msec())+".json", File.WRITE) != 0:
+		print("Error opening file")
+		return
+	file.store_line(to_json(self.population_array))
+	file.close()
+
+func _on_ExportCurrentSpeciesArray_pressed():
+	var file = File.new()
+	if file.open("res://saved_species_array_"+str(OS.get_ticks_msec())+".json", File.WRITE) != 0:
+		print("Error opening file")
+		return
+	file.store_line(to_json(self.species_array))
+	file.close()
