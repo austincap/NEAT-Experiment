@@ -1,10 +1,11 @@
 extends Node2D
-var VNN = preload("res://NEAT/VisualNeuralNet.tscn")
+#var VNN = preload("res://NEAT/VisualNeuralNet.tscn")
 var NeuralNet = preload("res://NEAT/NeuralNet.gd")
 var score = 0
-signal death()
+signal death(thisNode)
 signal emitDataToVNN(neuros)
 var thisNeuralNet
+var organismId
 var TIME = 0
 var showingVNN = false
 var inputTickObject = { 0:0.0, 1:0.0, 2:0.0, 3:0.0, 4:0.0 }
@@ -16,8 +17,11 @@ var outputIdArrayMovement = [5, 6, 7, 8]
 #5,6,7,8 movement
 
 
-func create(genome, neuroGenome):
+func create(genome, neuroGenome, organismId):
 	#self.connect("change_player_health", get_node("GUICanvasLayer/PartyStatus"), "_on_UserInterface_health_changed")
+	#self.connect("emitDataToVNN", self.get_tree().get_root().get_node("World/Camera2D/VisualNeuralNet"), "_on_dataEmittedToVNN")
+	#self.get_tree().get_root().get_node("World/Camera2D/VisualNeuralNet").connect("emitDataToVNN", self, "_on_dataEmittedToVNN")
+	self.organismId = organismId
 	self.global_position.x = rand_range(-500, 500)
 	self.global_position.y = rand_range(-300, 300)
 	self.thisNeuralNet = NeuralNet.new(genome, neuroGenome)
@@ -25,7 +29,7 @@ func create(genome, neuroGenome):
 
 func _on_InputTickTimer_timeout():
 	self.outputTickObject = self.thisNeuralNet.CINNmethod(self.inputTickObject)
-	if showingVNN:
+	if self.showingVNN == true:
 		emit_signal("emitDataToVNN", self.thisNeuralNet.neuros)
 	self.inputTickObject = { 0:0.0, 1:0.0, 2:0.0, 3:0.0, 4:0.0 }
 	actOnOutputObject()
@@ -82,7 +86,7 @@ func activateOutputNeuro(outputNeuroId):
 
 #OTHER FUNCTIONS RELEVANT TO ORGANISM
 func die():
-	emit_signal("death")
+	emit_signal("death", self)
 
 func _on_NeuroFireRetryTimer_timeout():
 	pass # Replace with function body.
@@ -91,15 +95,23 @@ func _on_Button_pressed():
 	self.thisNeuralNet.CINNmethod(self.inputTickObject)
 
 func _on_CheckBrainButton_pressed():
-	for enemy in get_tree().get_nodes_in_group("VNN"):
-		enemy.queue_free()
-	var visualNeuralNet = VNN.instance().create(self.thisNeuralNet.neuros)
-	self.get_tree().get_root().get_node("World").get_node("Camera2D").get_node("Player").add_child(visualNeuralNet)
-	print(self.name)
-	print(self.get_parent().name)
-	print(self.get_tree().get_root().name)
-	print(self.get_tree().get_root().get_node("World").get_node("Camera2D").name)
+	self.showingVNN = false
+	for node in get_tree().get_nodes_in_group("VNN"):
+		node.queue_free()
+	#var visualNeuralNet = VNN.instance().create(self.thisNeuralNet.neuros)
+	#self.get_tree().get_root().get_node("World").get_node("Camera2D").get_node("Player").add_child(visualNeuralNet)
+	var theVNNnode = self.get_tree().get_root().get_node("World").get_node("Camera2D").get_node("Player").get_node("VisualNeuralNet")
+	theVNNnode.visible = true
+	theVNNnode.create(self.thisNeuralNet.neuros)
+	#print(self.name)
+	#print(self.get_parent().name)
+	#print(self.get_tree().get_root().name)
+	#print(self.get_tree().get_root().get_node("World").get_node("Camera2D").name)
 	#self.get_tree().get_root().get_node("World").add_child(visualNeuralNet)
-	visualNeuralNet.position.x = 0
-	visualNeuralNet.position.y = 0
+	#visualNeuralNet.position.x = 0
+	#visualNeuralNet.position.y = 0
 	self.showingVNN = true
+
+func _on_WeakSpot_area_shape_entered(area_id, area, area_shape, self_shape):
+	self.score -= 3
+	die()

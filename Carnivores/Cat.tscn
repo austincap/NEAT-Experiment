@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://Carnivores/cat.png" type="Texture" id=1]
 [ext_resource path="res://Carnivores/Cat.gd" type="Script" id=2]
+
+[sub_resource type="CircleShape2D" id=1]
+radius = 10.1755
 
 [node name="Cat" type="Node2D" groups=[
 "organisms",
@@ -13,6 +16,8 @@ texture = ExtResource( 1 )
 hframes = 2
 
 [node name="LeftVision" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="LeftVision"]
 position = Vector2( -60, 0 )
@@ -20,6 +25,8 @@ scale = Vector2( 6, 8 )
 polygon = PoolVector2Array( 9.29708, 0.211813, -9.13621, 13.7897, -9.64955, -14.4441 )
 
 [node name="UpVision" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="UpVision"]
 position = Vector2( 5, -60 )
@@ -27,6 +34,8 @@ scale = Vector2( 8, 6 )
 polygon = PoolVector2Array( -0.777533, 9.36449, -14.3996, -10.6277, 14.7158, -10.9699 )
 
 [node name="RightVision" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="RightVision"]
 position = Vector2( 60, 0 )
@@ -34,6 +43,8 @@ scale = Vector2( 6, 8 )
 polygon = PoolVector2Array( -9.81277, -0.376471, 10.5235, -13.5712, 12.3767, 12.6626 )
 
 [node name="DownVision" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="DownVision"]
 position = Vector2( 0, 60 )
@@ -71,6 +82,13 @@ text = "chk"
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="WeakSpot" type="Area2D" parent="."]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WeakSpot"]
+position = Vector2( 0, 3 )
+shape = SubResource( 1 )
 [connection signal="area_shape_entered" from="LeftVision" to="." method="_on_LeftVision_area_shape_entered"]
 [connection signal="area_shape_entered" from="UpVision" to="." method="_on_UpVision_area_shape_entered"]
 [connection signal="area_shape_entered" from="RightVision" to="." method="_on_RightVision_area_shape_entered"]
@@ -79,3 +97,4 @@ __meta__ = {
 [connection signal="timeout" from="NeuroFireRetryTimer" to="." method="_on_NeuroFireRetryTimer_timeout"]
 [connection signal="pressed" from="ProcessInputOnceButton" to="." method="_on_Button_pressed"]
 [connection signal="pressed" from="CheckBrainButton" to="." method="_on_CheckBrainButton_pressed"]
+[connection signal="area_shape_entered" from="WeakSpot" to="." method="_on_WeakSpot_area_shape_entered"]

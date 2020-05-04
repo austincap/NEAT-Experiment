@@ -36,8 +36,8 @@ var topology = []
 
 func _init(connectionGenome, masterNeuroGenome):
 	self.connectionGenome = connectionGenome
-	self.neuroGenome = masterNeuroGenome
-	var modifiedNeuroGenome = self.neuroGenome
+	##self.neuroGenome = masterNeuroGenome
+	##var modifiedNeuroGenome = self.neuroGenome
 	var tempGene
 	#Create neuros
 	var i = 0
@@ -75,62 +75,64 @@ func _init(connectionGenome, masterNeuroGenome):
 		if str(geneId) == "fitness" or str(geneId) == "speciesid":
 			pass
 		else:
-			print("test")
+			#print("test")
 			if tempGene["type"] == "connection":
 				#print(tempGene)
-				print(self.neuros[tempGene.out])
-				#add connection data to individual Neuros
-				#assume self.neuros has both neuros at ends of connection    and self.neuros.has(tempGene.in) and self.neuros.has(tempGene.out)
-				self.neuros[tempGene.out]["inputsToNeuro"][tempGene.in] = tempGene.weight
-				self.neuros[tempGene.out]["expected_inputs"] += 1
-				if self.neuros[tempGene.in]["type"] == "Input":
-					pass
-				self.neuros[tempGene.in]["outputsFromNeuro"][tempGene.out] = tempGene.weight
+				#print(self.neuros[tempGene.out])
+				#add connection data to individual Neuros if they exist in genome (may result in dead genes)
+				if self.neuros.has(tempGene.out) and self.neuros.has(tempGene.in):
+					self.neuros[tempGene.out]["inputsToNeuro"][tempGene.in] = tempGene.weight
+					self.neuros[tempGene.out]["expected_inputs"] += 1
+					self.neuros[tempGene.in]["outputsFromNeuro"][tempGene.out] = tempGene.weight
 				#mutate_weight(tempGene)
-				continue
+				#continue
 			elif tempGene["type"] == "disable_connection":
-				connectionGenome[tempGene.disableInnovationId]["enabled"] = false
-				var inConnectionToRemove = connectionGenome[tempGene.disableInnovationId]["in"]
-				var outConnectionToRemove = connectionGenome[tempGene.disableInnovationId]["out"]
-				var inputsToNeuroDict = self.neuros[outConnectionToRemove]["inputsToNeuro"]
-				var outputsFromNeuroDict = self.neuros[inConnectionToRemove]["outputsFromNeuro"]
-				if inputsToNeuroDict.has(inConnectionToRemove):
-					self.neuros[outConnectionToRemove]["expected_inputs"] -= 1
-					inputsToNeuroDict.erase(inConnectionToRemove)
-				if outputsFromNeuroDict.has(outConnectionToRemove):
-					outputsFromNeuroDict.erase(outConnectionToRemove)
-				continue
+				if connectionGenome.has(tempGene.disableInnovationId):
+					connectionGenome[tempGene.disableInnovationId]["enabled"] = false
+					var inConnectionToRemove = connectionGenome[tempGene.disableInnovationId]["in"]
+					var outConnectionToRemove = connectionGenome[tempGene.disableInnovationId]["out"]
+					var inputsToNeuroDict = self.neuros[outConnectionToRemove]["inputsToNeuro"]
+					var outputsFromNeuroDict = self.neuros[inConnectionToRemove]["outputsFromNeuro"]
+					if inputsToNeuroDict.has(inConnectionToRemove):
+						self.neuros[outConnectionToRemove]["expected_inputs"] -= 1
+						inputsToNeuroDict.erase(inConnectionToRemove)
+					if outputsFromNeuroDict.has(outConnectionToRemove):
+						outputsFromNeuroDict.erase(outConnectionToRemove)
+					#continue
 			elif tempGene["type"] == "enable_connection":
-				var connectionToEnable = connectionGenome[tempGene.enableInnovationId]
-				connectionToEnable["enabled"] = true
-				self.neuros[connectionToEnable.out]["inputsToNeuro"][connectionToEnable.in] = connectionToEnable.weight
-				self.neuros[connectionToEnable.out]["expected_inputs"] += 1
-				self.neuros[connectionToEnable.in]["outputsFromNeuro"][connectionToEnable.out] = connectionToEnable.weight
-				continue
+				if connectionGenome.has(tempGene.enableInnovationId):
+					var connectionToEnable = connectionGenome[tempGene.enableInnovationId]
+					connectionToEnable["enabled"] = true
+					self.neuros[connectionToEnable.out]["inputsToNeuro"][connectionToEnable.in] = connectionToEnable.weight
+					self.neuros[connectionToEnable.out]["expected_inputs"] += 1
+					self.neuros[connectionToEnable.in]["outputsFromNeuro"][connectionToEnable.out] = connectionToEnable.weight
+					#continue
 			elif tempGene["type"] == "disable_neuro":
-				var selected_neuroId = tempGene.selected_neuroId
-				#var temp = self.inputAndHiddenNeuros.find(selected_neuroId)
-				var temp = self.hiddenNeurosArray.find(selected_neuroId)
-				if temp != -1:
-					self.hiddenNeurosArray.erase(self.hiddenNeurosArray[temp])
-					#self.inputAndHiddenNeuros.erase(self.inputAndHiddenNeuros[temp])
-					self.neuroGenome[selected_neuroId]["enabled"] = false
-					self.neuros[selected_neuroId]["enabled"] = false
-					self.hiddenNeuros[selected_neuroId] = self.neuros[selected_neuroId]
-				else:
-					print("no neuro with that id found")
-				continue
+				if self.neuros.has(tempGene.selected_neuroId):
+					var selected_neuroId = tempGene.selected_neuroId
+					#var temp = self.inputAndHiddenNeuros.find(selected_neuroId)
+					var temp = self.hiddenNeurosArray.find(selected_neuroId)
+					if temp != -1:
+						self.hiddenNeurosArray.erase(self.hiddenNeurosArray[temp])
+						#self.inputAndHiddenNeuros.erase(self.inputAndHiddenNeuros[temp])
+						##self.neuroGenome[selected_neuroId]["enabled"] = false
+						self.neuros[selected_neuroId]["enabled"] = false
+						self.hiddenNeuros[selected_neuroId] = self.neuros[selected_neuroId]
+					else:
+						print("no neuro with that id found")
+					#continue
 			elif tempGene["type"] == "enable_neuro":
-				var selected_neuroId = tempGene.selected_neuroId
-				#just add re-enabled neuro to end of array because we're gonna remake the matrix anyway
-				#self.inputAndHiddenNeuros.append(enabled_neuro_id)
-				self.hiddenNeurosArray.append(selected_neuroId)
-				self.neuroGenome[selected_neuroId]["enabled"] = true
-				self.neuros[selected_neuroId]["enabled"] = true
-				self.hiddenNeuros[selected_neuroId] = self.neuros[selected_neuroId]
-				continue
+				if self.neuros.has(tempGene.selected_neuroId):
+					var selected_neuroId = tempGene.selected_neuroId
+					#just add re-enabled neuro to end of array because we're gonna remake the matrix anyway
+					#self.inputAndHiddenNeuros.append(enabled_neuro_id)
+					self.hiddenNeurosArray.append(selected_neuroId)
+					##self.neuroGenome[selected_neuroId]["enabled"] = true
+					self.neuros[selected_neuroId]["enabled"] = true
+					self.hiddenNeuros[selected_neuroId] = self.neuros[selected_neuroId]
+					#continue
 	self.topology = [len(self.inputNeuros.keys()), len(self.hiddenNeuros.keys()), len(self.outputNeuros.keys())]
-	print(self.neuros)
+	#print(self.neuros)
 
 
 #NEURAL NET FUNCTIONS
@@ -196,6 +198,7 @@ func CINNmethod(inputTickObject):
 	var i = 0
 	for outputId in self.outputNeurosArray:
 		self.outputObject[outputId] = self.outputVector[i]
+		self.neuros[outputId]["output"] = self.outputVector[i]
 		i += 1
 	return self.outputObject
 

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://World.gd" type="Script" id=1]
 [ext_resource path="res://Player/Player.tscn" type="PackedScene" id=2]
+[ext_resource path="res://NEAT/VisualNeuralNet.tscn" type="PackedScene" id=3]
 
 [node name="World" type="Node2D"]
 script = ExtResource( 1 )
@@ -118,5 +119,12 @@ margin_right = 198.0
 margin_bottom = 88.0
 text = "Start simulation"
 
-[node name="Player" parent="Camera2D" instance=ExtResource( 2 )]
+[node name="Player" parent="Camera2D" groups=[
+"player",
+] instance=ExtResource( 2 )]
+
+[node name="VisualNeuralNet" parent="Camera2D/Player" instance=ExtResource( 3 )]
+visible = false
+position = Vector2( 1.46954, -2.45325 )
+[connection signal="pressed" from="Camera2D/PanelContainer2/VBoxContainer/NewGeneration" to="." method="_on_NewGeneration_pressed"]
 [connection signal="toggled" from="Camera2D/PanelContainer2/VBoxContainer/StartSimulation" to="." method="_on_StartSimulation_toggled"]

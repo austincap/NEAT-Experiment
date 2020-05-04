@@ -1,7 +1,5 @@
 extends Node2D
-var NeuralNet = load("res://NEAT/NeuralNet.gd")
 var Cat = preload("res://Carnivores/Cat.tscn")
-
 var lifetime_pop = 0
 var this_gen_pop = 0
 var generation_number = 0
@@ -32,7 +30,7 @@ var simpleStartingGenome = {
 #	{"id":0, "population":33, "avgfitness":10, "typicalgenome":{"genome":"data"}}
 #]
 
-var GENERATION_SIZE = 10
+var GENERATION_SIZE = 50
 var NUMBER_OF_RANDOM_NOVEL_ORGANISMS_PER_GENERATION = 1
 var TIMES_TO_CLONE_TOP_ORGANISM_DURING_REPRODUCTION = 5
 var innovationDictSize = 9
@@ -68,7 +66,7 @@ var masterNeuroGenome = {
 	6:{"type":"Output", "enabled":true},
 	7:{"type":"Output", "enabled":true},
 	8:{"type":"Output", "enabled":true},
-	9:{"type":"Hidden", "enabled":false},
+	9:{"type":"Hidden", "enabled":true},
 	10:{"type":"Hidden", "enabled":true},
 	11:{"type":"Hidden", "enabled":true}
 }
@@ -92,30 +90,7 @@ var masterInnovationList = {
 	14:{"type":"connection", "in":1, "out":11, "weight":0.5, "innovationId":14, "enabled":true}
 }
 
-
-class MyCustomSorter:
-	static func sort_ascending(a, b):
-		if a < b:
-			return true
-		return false
-	
-	static func sort_ascending_make_array(a, b):
-		if a < b:
-			return a
-		return b
-	
-	static func sort_geneticDistancesArray_ascending(a, b):
-		if a[0] < b[0]:
-			return true
-		return false
-		
-	static func sort_pop_array_of_genome_objects_ascending_make_array(a, b):
-		if a["fitness"] < b["fitness"]:
-			return true
-		return false
-
-
-#signal based
+#signal based death
 func evaluate_organism(organism_genome):
 	determineWhichSpeciesToClassifyItAs(organism_genome)
 
@@ -123,6 +98,7 @@ func _on_StartSimulation_toggled(button_pressed):
 	create_new_generation(self.GENERATION_SIZE)
 
 
+#CREATION
 func create_new_generation(gen_size):
 	self.this_gen_pop = 0
 	var tempArray = []
@@ -145,38 +121,50 @@ func create_new_generation(gen_size):
 			tempOrganismGenome = mating(sorted_genome_array[i+1], sorted_genome_array[i+2])
 			tempArray.append(tempOrganismGenome)
 	else:
+		var genome
 		for i in range(gen_size):
-			var genome = self.simpleStartingGenome.duplicate(true)
+			if i%2 == 1:
+				genome = self.simpleStartingGenome.duplicate(true)
+			else:
+				genome = create_new_genome_from_innovation_list()
 			mutate_random_weight(genome)
-			print(genome)
+			#print(genome)
 			tempArray.append(genome)
 	self.population_array = tempArray
 	for enemy in get_tree().get_nodes_in_group("organisms"):
 		enemy.queue_free()
+	print("population_array")
 	print(self.population_array)
+	var popId = 0
 	for genome in self.population_array:
-		print(genome)
-		create_new_organism(genome)
+		create_new_organism(genome, popId)
+		popId += 1
 	self.generation_number += 1
 	$"Camera2D/PanelContainer1/Container/HSplitContainer1/Label".text = str(self.generation_number)
 	print("new generation born")
-	print(len(self.population_array))
+	#print(len(self.population_array))
 
-func create_new_organism(genome):
+func create_new_organism(genome, indexInPopArray):
 	genome.fitness = 0
 	self.this_gen_pop += 1
 	self.lifetime_pop += 1
-	#var newOrganism = Cat.new(genome, self.masterNeuroGenome)
-	var newOrganism = Cat.instance().create(genome, self.masterNeuroGenome)
-	#print(newOrganism)
-	#print(print_tree())
+	var newOrganism = Cat.instance().create(genome, self.masterNeuroGenome, indexInPopArray)
 	get_tree().get_root().add_child(newOrganism)
-	#newOrganism.connect("death", self, "_on_organism_dead")
+	newOrganism.connect("emitDataToVNN", get_node("Camera2D/Player/VisualNeuralNet"), "_on_dataEmittedToVNN")
+	newOrganism.connect("death", self, "_on_organism_dead")
 
-func _on_organism_dead():
+func _on_organism_dead(organismNode):
+	print("another one bites the dust")
 	self.this_gen_pop -= 1
+	print(organismNode.score)
+	self.population_array[organismNode.organismId]["fitness"] = organismNode.score
+	print(self.population_array)
+	organismNode.queue_free()
+	if self.this_gen_pop == 0:
+		print("CREATE NEW GEN?")
 
 
+#CLASSIFICATION
 func geneticDistance(genomeA, genomeB):
 	var numGenesA = len(genomeA.values())
 	var numGenesB = len(genomeB.values())
@@ -246,7 +234,29 @@ func determineWhichSpeciesToClassifyItAs(genomeA):
 			genomeA["speciesid"] = closestMatchSpeciesId["speciesid"]
 		return
 
+class MyCustomSorter:
+	static func sort_ascending(a, b):
+		if a < b:
+			return true
+		return false
+	
+	static func sort_ascending_make_array(a, b):
+		if a < b:
+			return a
+		return b
+	
+	static func sort_geneticDistancesArray_ascending(a, b):
+		if a[0] < b[0]:
+			return true
+		return false
+		
+	static func sort_pop_array_of_genome_objects_ascending_make_array(a, b):
+		if a["fitness"] < b["fitness"]:
+			return true
+		return false
 
+
+#REPRODUCTION
 func mating(genomeA, genomeB):
 	#copy all matching genes
 	#if match not found, copy whatever the highest fitness genome has
@@ -294,17 +304,21 @@ func create_new_genome_from_innovation_list():
 	var i = 0
 	var innovationIdToPick = 0
 	var totalInnovations = len(self.masterInnovationList)
-	while i < 8:
-		innovationIdToPick = randi()%(totalInnovations+1)+1
+	randomize()
+	var sizeOfNewGenome = int(rand_range(8+totalInnovations/3, totalInnovations))
+	print(sizeOfNewGenome)
+	while i < sizeOfNewGenome:
+		innovationIdToPick = randi()%(totalInnovations)
 		#if random innovationId hasn't already been added
 		if newGenome.has(innovationIdToPick) == false:
+			print(innovationIdToPick)
 			newGenome[innovationIdToPick] = self.masterInnovationList[innovationIdToPick]
 			i += 1
 	return newGenome
 
 
+#MUTATE WEIGHT
 func mutate_weight(gene):
-	print(gene)
 	if randf() < chance_of_each_weight_randomly_mutated:
 		if randf() < chance_of_each_weight_uniform_mutation:
 			randomize_tweak_weight(gene)
@@ -321,17 +335,18 @@ func randomize_tweak_weight(gene):
 		gene["weight"] += rand_range(-0.1, 0.1)
 
 func mutate_random_weight(genome):
-	print(genome)
+	#print(genome)
 	var tempArray = genome.keys()
 	randomize()
 	var randomKey = tempArray[randi()%len(tempArray)]
 	while str(randomKey) == "fitness" or str(randomKey) == "speciesid":
 		randomize()
 		randomKey = tempArray[randi()%len(tempArray)]
-	print('geneID: '+str(randomKey))
+	#print('geneID: '+str(randomKey))
 	mutate_weight(genome[int(randomKey)])
 
 
+#MUTATE GENOME
 func chooseMutationType(genome):
 	if randf() < chance_mess_with_neuros:
 		if randf() < chance_new_neuro:
@@ -406,18 +421,7 @@ func addConnectionToInnovationList():
 		self.masterInnovationList[self.innovationDictSize] = {"type":"connection", "in":newInConnectionNeuroId, "out":newOutConnectionNeuroId, "weight":0.5, "innovationId":self.innovationDictSize, "enabled":true}
 	else:
 		print("no connection added")
-	print(self.masterInnovationList)
 
-func checkIfConnectionExists(neuroA, neuroB):
-	if self.neuros[neuroA]["inputsToNeuro"].has(neuroB):
-		if self.neuros[neuroB]["outputsToNeuro"].has(neuroA):
-			return true
-		else:
-			return false
-	elif self.neuros[neuroB]["inputsToNeuro"].has(neuroA):
-		if self.neuros[neuroA]["outputsToNeuro"].has(neuroB):
-			return true
-		else:
-			return false
-	else:
-		return false
+
+func _on_NewGeneration_pressed():
+	create_new_generation(self.GENERATION_SIZE)
