@@ -1,5 +1,6 @@
 extends Node2D
-#var VNN = preload("res://NEAT/VisualNeuralNet.tscn")
+#property vector = [edible, dangerous, aggressive, ally, smells good, smells weird]
+var propertyVector = [1, 1, 0, 1, 0, 0]
 var NeuralNet = preload("res://NEAT/NeuralNet.gd")
 var score = 0
 signal death(thisNode)
@@ -8,6 +9,7 @@ var thisNeuralNet
 var organismId
 var TIME = 0
 var showingVNN = false
+var inputPropertyVector = [0, 0, 0, 0, 0, 0]
 var inputTickObject = { 0:0.0, 1:0.0, 2:0.0, 3:0.0, 4:0.0 }
 var outputTickObject = {5:0.0, 6:0.0, 7:0.0, 8:0.0}
 var outputTickVector = []
@@ -98,18 +100,9 @@ func _on_CheckBrainButton_pressed():
 	self.showingVNN = false
 	for node in get_tree().get_nodes_in_group("VNN"):
 		node.queue_free()
-	#var visualNeuralNet = VNN.instance().create(self.thisNeuralNet.neuros)
-	#self.get_tree().get_root().get_node("World").get_node("Camera2D").get_node("Player").add_child(visualNeuralNet)
 	var theVNNnode = self.get_tree().get_root().get_node("World").get_node("Camera2D").get_node("Player").get_node("VisualNeuralNet")
 	theVNNnode.visible = true
 	theVNNnode.create(self.thisNeuralNet.neuros)
-	#print(self.name)
-	#print(self.get_parent().name)
-	#print(self.get_tree().get_root().name)
-	#print(self.get_tree().get_root().get_node("World").get_node("Camera2D").name)
-	#self.get_tree().get_root().get_node("World").add_child(visualNeuralNet)
-	#visualNeuralNet.position.x = 0
-	#visualNeuralNet.position.y = 0
 	self.showingVNN = true
 
 func _on_WeakSpot_area_shape_entered(area_id, area, area_shape, self_shape):
@@ -117,5 +110,5 @@ func _on_WeakSpot_area_shape_entered(area_id, area, area_shape, self_shape):
 		self.score += 2
 		area.get_parent().queue_free()
 	elif area.is_in_group("player"):
-		self.score -= 3
+		self.score -= 10
 		die()

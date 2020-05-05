@@ -1,15 +1,20 @@
-extends Node
+extends Node2D
 var NeuroPanel = preload("res://NEAT/NeuroPanel.tscn")
 var neuroNodesDictionary = {}
-var tempLineCoordinates = []
+var neurosCopy = {}
+var listOfConnectionPoints = []
+
 
 func create(neuros):
 	self.neuroNodesDictionary = {}
+	
+	self.neurosCopy = neuros
 	var gridContainer = get_node("GridContainer")
 	for neuroId in neuros:
 		var newNeuroPanel = NeuroPanel.instance()
 		newNeuroPanel.get_node("VBoxContainer").get_child(0).text = str(neuroId)
 		self.neuroNodesDictionary[neuroId] = newNeuroPanel
+		listOfConnectionPoints.append(newNeuroPanel.get_node("VBoxContainer").get_global_position())
 		newNeuroPanel.get_node("VBoxContainer").get_child(1).text = str(neuros[neuroId]["output"])
 		gridContainer.add_child(newNeuroPanel)
 		if neuros[neuroId]["type"] == "Input":
@@ -18,35 +23,28 @@ func create(neuros):
 			newNeuroPanel.modulate = Color(1, 1, 1)
 		elif neuros[neuroId]["type"] == "Output":
 			newNeuroPanel.modulate = Color(0.9, 0.3, 0.0)
-#	for neuroId in neuros:
-#		#var line = Line2D.new()
-#		#line.width = 22.0
-#		var test = CanvasItem.new()
-#
-#		#line.add_point(self.neuroNodesDictionary[neuroId].get_position())
-#		if neuros[neuroId]["type"] == "Hidden":
-#			print(self.neuroNodesDictionary[neuroId].get_position())
-#			if neuros[neuroId]["expected_inputs"] > 0:
-#				for incomingNeuroId in neuros[neuroId]["inputsToNeuro"]:
-#					test.draw_line(self.neuroNodesDictionary[neuroId].get_position(), Vector2(0, 0), Color(1.0, 0.2, 0.2))
-#					#line.add_point(self.neuroNodesDictionary[incomingNeuroId].get_position())
-#					#line.draw_line()
-#					#line = [self.neuroNodesDictionary[neuroId].get_position(), self.neuroNodesDictionary[incomingNeuroId].get_position()]
-#			if len(neuros[neuroId]["outputsFromNeuro"].keys()) > 0:
-#				for receivingNeuroId in neuros[neuroId]["outputsFromNeuro"]:
-#					test.draw_line(self.neuroNodesDictionary[neuroId].get_position(), self.neuroNodesDictionary[receivingNeuroId].get_position(), Color(1.0, 0.2, 0.2))
-#					#line.points = [self.neuroNodesDictionary[neuroId].get_position(), self.neuroNodesDictionary[receivingNeuroId].get_position()]
-#		elif neuros[neuroId]["type"] == "Input":
-#			if len(neuros[neuroId]["outputsFromNeuro"].keys()) > 0:
-#				var teset = CanvasItem.new()
-#				for receivingNeuroId in neuros[neuroId]["outputsFromNeuro"]:
-#					teset.draw_line(self.neuroNodesDictionary[neuroId].get_position(), self.neuroNodesDictionary[receivingNeuroId].get_position(), Color(1.0, 0.2, 0.2))
-#					#test.update()
+	update()
 	return self
 
+	
 #func _draw():
-#	test.draw_line(self.neuroNodesDictionary[neuroId].get_position(), self.neuroNodesDictionary[receivingNeuroId].get_position(), Color(1.0, 0.2, 0.2))
-
+#	var tempNeuro = {}
+#	for neuroId in self.neurosCopy:
+#		tempNeuro = self.neurosCopy[neuroId]
+#		print(self.neuroNodesDictionary[neuroId].get_node("VBoxContainer").get_global_position())
+#		if tempNeuro["type"] == "Hidden":
+#			if tempNeuro["expected_inputs"] > 0:
+#				for incomingNeuroId in tempNeuro["inputsToNeuro"]:
+#					draw_line(self.neuroNodesDictionary[neuroId].get_global_transform()[2], self.neuroNodesDictionary[incomingNeuroId].get_global_transform()[2], Color(1.0, 0.2, 0.2))
+#			if len(tempNeuro["outputsFromNeuro"].keys()) > 0:
+#				for receivingNeuroId in tempNeuro["outputsFromNeuro"]:
+#					draw_line(self.neuroNodesDictionary[neuroId].get_global_transform()[2], Vector2(0,0), Color(1.0, 0.2, 0.2))
+#		elif tempNeuro["type"] == "Input":
+#			if len(tempNeuro["outputsFromNeuro"].keys()) > 0:
+#				for receivingNeuroId in tempNeuro["outputsFromNeuro"]:
+#					draw_line(self.neuroNodesDictionary[neuroId].get_global_transform()[2], self.neuroNodesDictionary[receivingNeuroId].get_global_transform()[2], Color(1.0, 0.2, 0.2))
+#	self.neurosCopy = {}
+	
 func _on_CloseButton_pressed():
 	self.visible = false
 

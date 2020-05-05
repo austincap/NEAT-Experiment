@@ -1,7 +1,7 @@
 extends KinematicBody2D
-
-
-var speed = 200
+#property vector = [edible, dangerous, aggressive, ally, smells good, smells weird]
+var propertyVector = [1, 1, 0, 0, 0, 1]
+var speed = 300
 var velocity = Vector2()
 
 func _ready():
